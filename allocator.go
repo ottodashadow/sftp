@@ -4,21 +4,17 @@ import (
 	"sync"
 )
 
-type pagelist struct {
-	pages [][]byte
-}
-
 type allocator struct {
-	available *pagelist
+	available [][]byte
 	// map key is the request order
-	used map[uint32]*pagelist
+	used map[uint32][][]byte
 	sync.Mutex
 }
 
 func newAllocator() *allocator {
 	return &allocator{
-		available: new(pagelist),
-		used:      make(map[uint32]*pagelist),
+		available: nil,
+		used:      make(map[uint32][][]byte),
 	}
 }
 
@@ -30,12 +26,12 @@ func (a *allocator) GetPage(requestOrderID uint32) []byte {
 	var result []byte
 
 	// get an available page and remove it from the available ones
-	if len(a.available.pages) > 0 {
-		truncLength := len(a.available.pages) - 1
-		result = a.available.pages[truncLength]
+	if len(a.available) > 0 {
+		truncLength := len(a.available) - 1
+		result = a.available[truncLength]
 
-		a.available.pages[truncLength] = nil                // clear out the internal pointer
-		a.available.pages = a.available.pages[:truncLength] // truncate the slice
+		a.available[truncLength] = nil          // clear out the internal pointer
+		a.available = a.available[:truncLength] // truncate the slice
 	}
 
 	// no preallocated slice found, just allocate a new one
@@ -44,13 +40,7 @@ func (a *allocator) GetPage(requestOrderID uint32) []byte {
 	}
 
 	// put result in used pages
-	used := a.used[requestOrderID]
-	if used == nil {
-		used = new(pagelist)
-		a.used[requestOrderID] = used
-	}
-
-	used.pages = append(used.pages, result)
+	a.used[requestOrderID] = append(a.used[requestOrderID], result)
 
 	return result
 }
@@ -60,21 +50,20 @@ func (a *allocator) ReleasePages(requestOrderID uint32) {
 	a.Lock()
 	defer a.Unlock()
 
-	if used := a.used[requestOrderID]; used != nil {
-		a.available.pages = append(a.available.pages, used.pages...)
-		for i := range used.pages {
-			used.pages[i] = nil // we want to clear out the internal pointer here, so it is not left hanging around.
-		}
-		delete(a.used, requestOrderID)
+	if used, ok := a.used[requestOrderID]; ok && len(used) > 0 {
+		a.available = append(a.available, used...)
+		// this is probably useless
+		a.used[requestOrderID] = nil
 	}
+	delete(a.used, requestOrderID)
 }
 
 func (a *allocator) Free() {
 	a.Lock()
 	defer a.Unlock()
 
-	a.available = new(pagelist)
-	a.used = make(map[uint32]*pagelist)
+	a.available = nil
+	a.used = make(map[uint32][][]byte)
 }
 
 func (a *allocator) countUsedPages() int {
@@ -83,9 +72,7 @@ func (a *allocator) countUsedPages() int {
 
 	num := 0
 	for _, p := range a.used {
-		if p != nil {
-			num += len(p.pages)
-		}
+		num += len(p)
 	}
 	return num
 }
@@ -94,7 +81,7 @@ func (a *allocator) countAvailablePages() int {
 	a.Lock()
 	defer a.Unlock()
 
-	return len(a.available.pages)
+	return len(a.available)
 }
 
 func (a *allocator) isRequestOrderIDUsed(requestOrderID uint32) bool {

@@ -130,7 +130,7 @@ func printAllocatorContents(allocator *allocator) {
 	for o, u := range allocator.used {
 		debug("used order id: %v, values: %+v", o, u)
 	}
-	for _, v := range allocator.available.pages {
+	for _, v := range allocator.available {
 		debug("available, values: %+v", v)
 	}
 }
