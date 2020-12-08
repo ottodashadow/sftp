@@ -3,6 +3,7 @@ package sftp
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -655,14 +656,17 @@ func (c *Client) Join(elem ...string) string { return path.Join(elem...) }
 // is not empty.
 func (c *Client) Remove(path string) error {
 	err := c.removeFile(path)
+	fmt.Printf("err %v is os perm %v\n\n", err, os.IsPermission(err))
 	if err, ok := err.(*StatusError); ok {
+		fmt.Printf("aaaaaaaaaaaaaaaaaaaaaaaaa\n\n\n")
 		switch err.Code {
 		// some servers, *cough* osx *cough*, return EPERM, not ENODIR.
 		// serv-u returns ssh_FX_FILE_IS_A_DIRECTORY
 		case sshFxFailure, sshFxFileIsADirectory:
 			return c.RemoveDirectory(path)
 		}
-	} else if os.IsPermission(err) {
+	}
+	if os.IsPermission(err) {
 		return c.RemoveDirectory(path)
 	}
 	return err
