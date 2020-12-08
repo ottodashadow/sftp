@@ -659,9 +659,11 @@ func (c *Client) Remove(path string) error {
 		switch err.Code {
 		// some servers, *cough* osx *cough*, return EPERM, not ENODIR.
 		// serv-u returns ssh_FX_FILE_IS_A_DIRECTORY
-		case sshFxPermissionDenied, sshFxFailure, sshFxFileIsADirectory:
+		case sshFxFailure, sshFxFileIsADirectory:
 			return c.RemoveDirectory(path)
 		}
+	} else if os.IsPermission(err) {
+		return c.RemoveDirectory(path)
 	}
 	return err
 }
