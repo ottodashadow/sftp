@@ -27,15 +27,45 @@ jobs:
 
       - name: Run tests
         run: |
-          go test -integration -v ./...
-          go test -testserver -v ./...
-          go test -integration -testserver -v ./...
-          go test -integration -allocator -v ./...
-          go test -testserver -allocator -v ./...
-          go test -integration -testserver -allocator -v ./...
-          go test -race -integration -v ./...
-          go test -race -testserver -v ./...
-          go test -race -integration -testserver -v ./...
-          go test -race -integration -allocator -v ./...
-          go test -race -testserver -allocator -v ./...
-          go test -race -integration -allocator -testserver -v ./...
+          make integration
+          make integration_w_race
+
+  run-tests-other-archs:
+    name: Run test cases on other archs
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: aarch64
+            distro: stretch
+            go-arch: arm64
+          - arch: ppc64le
+            distro: stretch
+            go-arch: ppc64le
+    steps:
+      - uses: actions/checkout@v2
+      - uses: uraimo/run-on-arch-action@v2.0.7
+        name: run tests
+        with:
+          arch: ${{ matrix.arch }}
+          distro: ${{ matrix.distro }}
+          # seccomp=unconfined is required to run race detector on ppc64le
+          #dockerRunArgs: |
+          #  --security-opt seccomp=unconfined
+          shell: /bin/bash
+
+          install: |
+            apt-get update -q -y
+            apt-get install -q -y curl gcc make openssh-sftp-server
+            GO_VERSION=$(curl https://golang.org/VERSION?m=text)
+            curl --verbose -o go.tar.gz -L https://golang.org/dl/${GO_VERSION}.linux-${{ matrix.go-arch }}.tar.gz
+            tar -C /usr/local -xzf go.tar.gz
+
+          run: |
+            export PATH=$PATH:/usr/local/go/bin
+            make integration
+            # disable race detector for now
+            #if [ "${{ matrix.go-arch }}" != "arm64" ]; then
+            #  # race detector is not supported on arm64
+            #  make integration_w_race
+            #fi
