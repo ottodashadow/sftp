@@ -37,13 +37,13 @@ jobs:
       matrix:
         include:
           - arch: aarch64
-            distro: buster
+            distro: ubuntu20.04
             go-arch: arm64
           - arch: ppc64le
-            distro: buster
+            distro: ubuntu20.04
             go-arch: ppc64le
           - arch: armv7
-            distro: buster
+            distro: ubuntu20.04
             go-arch: armv6l
     steps:
       - uses: actions/checkout@v2
