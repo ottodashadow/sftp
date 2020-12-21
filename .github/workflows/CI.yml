@@ -37,13 +37,13 @@ jobs:
       matrix:
         include:
           - arch: aarch64
-            distro: stretch
+            distro: buster
             go-arch: arm64
           - arch: ppc64le
-            distro: stretch
+            distro: buster
             go-arch: ppc64le
           - arch: armv7
-            distro: stretch
+            distro: buster
             go-arch: armv6l
     steps:
       - uses: actions/checkout@v2
