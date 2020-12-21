@@ -47,7 +47,7 @@ jobs:
             go-arch: armv6l
     steps:
       - uses: actions/checkout@v2
-      - uses: uraimo/run-on-arch-action@v2.0.7
+      - uses: uraimo/run-on-arch-action@v2.0.8
         name: Run tests
         with:
           arch: ${{ matrix.arch }}
@@ -59,7 +59,7 @@ jobs:
 
           install: |
             apt-get update -q -y
-            apt-get install -q -y curl make openssh-sftp-server
+            apt-get install -q -y curl gcc make openssh-sftp-server
             GO_VERSION=$(curl https://golang.org/VERSION?m=text)
             curl --verbose -o go.tar.gz -L https://golang.org/dl/${GO_VERSION}.linux-${{ matrix.go-arch }}.tar.gz
             tar -C /usr/local -xzf go.tar.gz
