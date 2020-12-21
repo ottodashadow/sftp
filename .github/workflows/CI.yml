@@ -42,7 +42,7 @@ jobs:
           - arch: ppc64le
             distro: stretch
             go-arch: ppc64le
-          - arch: armv6
+          - arch: armv7
             distro: stretch
             go-arch: armv6l
     steps:
