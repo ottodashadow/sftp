@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches:
   pull_request:
 
 jobs:
@@ -11,10 +11,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         go: [1.16, 1.15]
         exclude:
           - os: macos-latest
+            go: 1.15
+          - os: windows-latest
             go: 1.15
 
     steps:
@@ -27,5 +29,15 @@ jobs:
 
       - name: Run tests
         run: |
-          make integration
-          make integration_w_race
+          go test -integration -v ./...
+          go test -testserver -v ./...
+          go test -integration -testserver -v ./...
+          go test -integration -allocator -v ./...
+          go test -testserver -allocator -v ./...
+          go test -integration -testserver -allocator -v ./...
+          go test -race -integration -v ./...
+          go test -race -testserver -v ./...
+          go test -race -integration -testserver -v ./...
+          go test -race -integration -allocator -v ./...
+          go test -race -testserver -allocator -v ./...
+          go test -race -integration -allocator -testserver -v ./...
