@@ -15,6 +15,7 @@ const (
 	ErrSSHFxNoConnection     = fxerr(sshFxNoConnection)
 	ErrSSHFxConnectionLost   = fxerr(sshFxConnectionLost)
 	ErrSSHFxOpUnsupported    = fxerr(sshFxOPUnsupported)
+	ErrSSHFxQuotaExceeded    = fxerr(sshFxQuotaExceeded)
 )
 
 // Deprecated error types, these are aliases for the new ones, please use the new ones directly
@@ -48,6 +49,8 @@ func (e fxerr) Error() string {
 		return "Connection Lost"
 	case ErrSSHFxOpUnsupported:
 		return "Operation Unsupported"
+	case ErrSSHFxQuotaExceeded:
+		return "Quota Exceeded"
 	default:
 		return "Failure"
 	}
